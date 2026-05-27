@@ -1,24 +1,20 @@
-# .gitignore — Fichiers a ne pas versionner
+# .gitignore -- Projet PLBD-36
 
-# Modele TFLite (trop lourd pour GitHub, utiliser Git LFS si necessaire)
+# Modeles ML (trop lourds pour Git)
 modele/*.tflite
 modele/*.pth
 modele/*.onnx
 
-# Fichiers Python compiles
+# Environnement Python
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
-
-# Environnement virtuel
-venv/
+.Python
 env/
+venv/
 .venv/
 
-# Jupyter Notebook checkpoints
+# Jupyter Notebooks
 .ipynb_checkpoints/
-*.ipynb_checkpoints
 
 # Logs
 *.log
@@ -27,12 +23,3 @@ logs/
 # Fichiers systeme
 .DS_Store
 Thumbs.db
-*.swp
-
-# Variables d'environnement (tokens, cles API)
-.env
-*.env
-
-# Images de test locales
-test_images/
-captures/
