@@ -1,0 +1,38 @@
+# .gitignore — Fichiers a ne pas versionner
+
+# Modele TFLite (trop lourd pour GitHub, utiliser Git LFS si necessaire)
+modele/*.tflite
+modele/*.pth
+modele/*.onnx
+
+# Fichiers Python compiles
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Environnement virtuel
+venv/
+env/
+.venv/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Logs
+*.log
+logs/
+
+# Fichiers systeme
+.DS_Store
+Thumbs.db
+*.swp
+
+# Variables d'environnement (tokens, cles API)
+.env
+*.env
+
+# Images de test locales
+test_images/
+captures/
