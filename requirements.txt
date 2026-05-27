@@ -1,0 +1,36 @@
+# requirements.txt — Dependances du projet PLBD-36
+# Installer avec : pip install -r requirements.txt
+
+# === Sur Raspberry Pi ===
+# RPi.GPIO pour le controle GPIO
+RPi.GPIO>=0.7.0
+
+# spidev pour le MCP3008 (capteur humidite analogique)
+spidev>=3.5
+
+# PiCamera2 pour la camera Raspberry Pi
+picamera2>=0.3.12
+
+# TensorFlow Lite (runtime leger pour Raspberry Pi)
+# Sur Pi Zero 2 W, utiliser tflite-runtime :
+# pip install tflite-runtime
+# Sur Pi 4/5, TensorFlow complet est possible :
+# pip install tensorflow
+
+# OpenCV (traitement image)
+opencv-python>=4.8.0
+
+# NumPy
+numpy>=1.24.0
+
+# === Pour l'entrainement sur PC (notebook) ===
+# torch>=2.0.0
+# torchvision>=0.15.0
+# timm>=0.9.0          # EfficientNet-B3
+# kagglehub>=0.2.0     # Dataset PlantVillage
+# matplotlib>=3.7.0
+# scikit-learn>=1.3.0
+# seaborn>=0.12.0
+# onnx>=1.14.0
+# onnx-tf>=1.10.0
+# tensorflow>=2.13.0   # Pour la conversion TFLite
