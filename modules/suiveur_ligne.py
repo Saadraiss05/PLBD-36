@@ -1,13 +1,10 @@
 # =============================================================================
-# modules/suiveur_ligne.py — Capteur infrarouge pour suivi de ligne
-# Compatible avec les modules KY-033 / TCRT5000 / similaires
+# modules/suiveur_ligne.py -- Capteur infrarouge suivi de ligne
+# Permet au robot de suivre une ligne noire sur fond blanc
 # =============================================================================
 
 import time
-from config.config import (
-    MODE_SIMULATION,
-    SUIVI_LIGNE_PIN_GAUCHE, SUIVI_LIGNE_PIN_DROIT
-)
+from config.config import MODE_SIMULATION, SUIVI_LIGNE_PIN_GAUCHE, SUIVI_LIGNE_PIN_DROIT
 
 try:
     import RPi.GPIO as GPIO
@@ -18,84 +15,80 @@ except ImportError:
 
 class SuiveurLigne:
     """
-    Capteur infrarouge pour suivi de ligne noire sur fond blanc.
-    Retourne des directives de navigation : AVANT, GAUCHE, DROITE, STOP.
+    Gestion du capteur IR pour le suivi de ligne.
+    Convention capteur : 0 = ligne noire detectee, 1 = fond blanc
     """
-
-    # Valeurs GPIO selon capteur : 0 = ligne noire detectee, 1 = fond blanc
-    # (peut varier selon le module — a verifier en testant)
-    LIGNE_DETECTEE = 0
 
     def __init__(self):
         self.initialise = False
-
         if MODE_SIMULATION:
             print("[SuiveurLigne] Mode SIMULATION")
             return
-
         if not GPIO_DISPONIBLE:
             print("[SuiveurLigne] RPi.GPIO non disponible")
             return
-
         try:
             GPIO.setmode(GPIO.BCM)
             GPIO.setup(SUIVI_LIGNE_PIN_GAUCHE, GPIO.IN)
             GPIO.setup(SUIVI_LIGNE_PIN_DROIT, GPIO.IN)
             self.initialise = True
-            print(f"[SuiveurLigne] OK (gauche={SUIVI_LIGNE_PIN_GAUCHE}, droit={SUIVI_LIGNE_PIN_DROIT})")
+            print(f"[SuiveurLigne] OK (G={SUIVI_LIGNE_PIN_GAUCHE}, D={SUIVI_LIGNE_PIN_DROIT})")
         except Exception as e:
-            print(f"[SuiveurLigne] Erreur init : {e}")
+            print(f"[SuiveurLigne] Erreur: {e}")
 
     def lire_capteurs(self):
-        """
-        Lit les deux capteurs IR.
-        Retourne (gauche, droit) : True si ligne detectee.
-        """
+        """Retourne (gauche, droite) : 0=ligne noire, 1=fond blanc"""
         if MODE_SIMULATION:
             import random
-            # Simulation : 70% ligne suivie normalement
-            r = random.random()
-            if r < 0.70:
-                return (True, True)   # Ligne au centre
-            elif r < 0.80:
-                return (True, False)  # Ligne a gauche
-            elif r < 0.90:
-                return (False, True)  # Ligne a droite
-            else:
-                return (False, False) # Ligne perdue
-        
+            scenarios = [(0,0),(0,0),(0,0),(0,1),(1,0)]
+            return random.choice(scenarios)
         if not self.initialise:
-            return (False, False)
-
+            return (1, 1)
         try:
-            gauche = GPIO.input(SUIVI_LIGNE_PIN_GAUCHE) == self.LIGNE_DETECTEE
-            droit = GPIO.input(SUIVI_LIGNE_PIN_DROIT) == self.LIGNE_DETECTEE
-            return (gauche, droit)
-        except Exception as e:
-            print(f"[SuiveurLigne] Erreur lecture : {e}")
-            return (False, False)
+            return (GPIO.input(SUIVI_LIGNE_PIN_GAUCHE), GPIO.input(SUIVI_LIGNE_PIN_DROIT))
+        except:
+            return (1, 1)
 
-    def obtenir_direction(self):
+    def analyser_position(self):
         """
-        Retourne la direction a prendre selon la position de la ligne.
-        Retourne : 'AVANT', 'GAUCHE', 'DROITE', ou 'STOP'
+        Analyse la position du robot par rapport a la ligne.
+        Retourne: 'centre', 'derive_gauche', 'derive_droite', 'perdu'
         """
-        gauche, droit = self.lire_capteurs()
-
-        if gauche and droit:
-            direction = 'AVANT'
-        elif gauche and not droit:
-            direction = 'GAUCHE'
-        elif not gauche and droit:
-            direction = 'DROITE'
+        g, d = self.lire_capteurs()
+        if g == 0 and d == 0:
+            position = 'centre'
+        elif g == 0 and d == 1:
+            position = 'derive_droite'
+        elif g == 1 and d == 0:
+            position = 'derive_gauche'
         else:
-            direction = 'STOP'  # Ligne perdue
+            position = 'perdu'
+        print(f"[SuiveurLigne] G={g} D={d} -> {position}")
+        return position
 
-        print(f"[SuiveurLigne] G={gauche} D={droit} -> {direction}")
-        return direction
+    def guider_moteurs(self, moteurs):
+        """
+        Ajuste les moteurs selon la position par rapport a la ligne.
+        Retourne False si le robot est perdu.
+        """
+        position = self.analyser_position()
+        if position == 'centre':
+            moteurs.avancer()
+            return True
+        elif position == 'derive_gauche':
+            moteurs.tourner_gauche(vitesse=40)
+            return True
+        elif position == 'derive_droite':
+            moteurs.tourner_droit(vitesse=40)
+            return True
+        else:
+            moteurs.arreter()
+            print("[SuiveurLigne] Robot perdu - arret")
+            return False
 
     def fermer(self):
         if GPIO_DISPONIBLE and self.initialise:
             try:
                 GPIO.cleanup([SUIVI_LIGNE_PIN_GAUCHE, SUIVI_LIGNE_PIN_DROIT])
-            except: pass
+            except:
+                pass
